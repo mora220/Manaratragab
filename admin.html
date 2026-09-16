@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المعلم | منصة المهام</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2, h3 { text-align: center; color: #2c3e50; }
+        input, select, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #bdc3c7; box-sizing: border-box; }
+        button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; margin-bottom: 20px;}
+        button:hover { background-color: #2ecc71; }
+        .dashboard-section { background: #ecf0f1; padding: 15px; margin-top: 15px; border-radius: 5px; }
+        #dashboardPanel { display: none; } /* مخفي افتراضياً */
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>لوحة تحكم المعلم</h2>
+
+    <!-- قسم تسجيل الدخول -->
+    <div id="loginPanel">
+        <h3>تسجيل الدخول</h3>
+        <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+        <input type="password" id="password" placeholder="كلمة المرور" required>
+        <button id="loginBtn">دخول</button>
+        <p id="loginError" style="color: red; text-align: center; display: none;">بيانات الدخول غير صحيحة!</p>
+    </div>
+
+    <!-- لوحة التحكم (تظهر بعد الدخول) -->
+    <div id="dashboardPanel">
+        <button id="logoutBtn" style="background-color: #e74c3c;">تسجيل الخروج</button>
+
+        <div class="dashboard-section">
+            <h3>إضافة مهمة أدائية جديدة</h3>
+            <input type="text" id="taskName" placeholder="اسم المهمة (مثال: بحث عن المثلثات)">
+            <button id="addTaskBtn">إضافة المهمة</button>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>إضافة فصل جديد</h3>
+            <input type="text" id="className" placeholder="اسم الفصل (مثال: الصف الأول الإعدادي)">
+            <button id="addClassBtn">إضافة الفصل</button>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>إضافة طالب</h3>
+            <input type="text" id="studentName" placeholder="اسم الطالب الثلاثي">
+            <select id="adminClassSelect"><option value="">-- جاري التحميل... --</option></select>
+            <button id="addStudentBtn">إضافة الطالب</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="admin.js"></script>
+</body>
+</html>
