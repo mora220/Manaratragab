@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة تسليم أعمال المهام الأدائية | رياضيات</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; font-size: 22px; }
+        .header-subtitle { text-align: center; color: #e67e22; font-size: 16px; font-weight: bold; margin-bottom: 20px; }
+        h3 { text-align: center; color: #2c3e50; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #34495e; }
+        select, input[type="file"], button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #bdc3c7; box-sizing: border-box; }
+        button { background-color: #3498db; color: white; border: none; cursor: pointer; margin-top: 20px; font-size: 16px; font-weight: bold; }
+        button:hover { background-color: #2980b9; }
+        .my-works { margin-top: 30px; padding-top: 20px; border-top: 2px solid #ecf0f1; }
+        .work-item { background: #ecf0f1; padding: 10px; margin-top: 10px; border-radius: 5px; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 15px; font-size: 14px; color: #7f8c8d; border-top: 1px dashed #bdc3c7; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>منصة تسليم أعمال المهام الأدائية</h2>
+    <div class="header-subtitle">مادة الرياضيات</div>
+    
+    <form id="uploadForm">
+        <!-- القوائم المنسدلة ستكون فارغة مبدئياً وسيتم ملؤها من قاعدة البيانات -->
+        <label for="taskSelect">اختر المهمة الأدائية:</label>
+        <select id="taskSelect" required>
+            <option value="">-- جاري التحميل... --</option>
+        </select>
+
+        <label for="classSelect">اختر الفصل:</label>
+        <select id="classSelect" required>
+            <option value="">-- جاري التحميل... --</option>
+        </select>
+
+        <label for="studentSelect">اختر اسمك:</label>
+        <select id="studentSelect" required>
+            <option value="">-- يرجى اختيار الفصل أولاً --</option>
+        </select>
+
+        <label for="fileUpload">اختر العمل (صورة أو فيديو):</label>
+        <input type="file" id="fileUpload" accept="image/*,video/*" required>
+
+        <button type="submit">رفع العمل الآن</button>
+    </form>
+
+    <div class="my-works">
+        <h3>أعمالي السابقة</h3>
+        <div id="worksList">
+            <p style="text-align: center; color: #7f8c8d;">لم تقم برفع أي أعمال من هذا الجهاز حتى الآن.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        إعداد وتصميم الموقع: معلم الرياضيات محمد رجب
+    </div>
+</div>
+
+<!-- ربط ملف الجافاسكريبت -->
+<script type="module" src="script.js"></script>
+</body>
+</html>
