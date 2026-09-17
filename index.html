@@ -57,7 +57,6 @@
 
 <!-- واجهة الطالب -->
 <div id="studentView" class="view-section container">
-    <!-- الترويسة والهوية البصرية -->
     <div class="header-section">
         <img src="منارات الرياض.jpg" alt="شعار منارات الرياض" class="school-logo" onerror="this.style.display='none'">
         <h2 class="school-name">مدارس منارات الرياض</h2>
@@ -132,7 +131,6 @@
         <button onclick="addStudentsBulk()" class="btn-green">إضافة الطلاب للفصل المحدد</button>
     </div>
 
-    <!-- قسم الإدارة (تعديل وحذف) -->
     <div class="dashboard-section" style="border-top-color: #f39c12;">
         <h3>إدارة البيانات (تعديل وحذف)</h3>
         <select id="manageDataType" onchange="loadManageList()">
@@ -165,13 +163,13 @@
         <div id="superWorksContainer" style="margin-top: 20px;"></div>
     </div>
 </div>
+
 <!-- كود Firebase والبرمجة -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    // لاحظ إضافة uploadBytesResumable هنا
-    import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAwoo2lKgcNRTDvGx6_iVUmFbhsDELVTy8",
@@ -260,7 +258,7 @@
         students.forEach(s => studentSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
     });
 
-    // --- تحديث دالة الرفع لإظهار النسبة المئوية ---
+    // الرفع مع مؤشر ذكي يحاكي النسبة المئوية
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const task = document.getElementById('studentTaskSelect').value;
@@ -273,33 +271,27 @@
         if(!task || !student) return alert("اختر المهمة والاسم.");
         
         btn.disabled = true;
-        btn.innerText = "جاري التحضير...";
+        let progress = 0;
+        
+        // تشغيل مؤشر وهمي ذكي لكي لا يشعر الطالب بالملل
+        const progressInterval = setInterval(() => {
+            progress += Math.floor(Math.random() * 15) + 5; 
+            if(progress >= 95) progress = 95; // يقف عند 95% حتى يكتمل الرفع الفعلي
+            btn.innerText = `جاري الرفع... ${progress}%`;
+        }, 800);
 
         try {
             const uniqueName = Date.now() + "_" + file.name;
             const storageRef = ref(storage, `uploads/${className}/${task}/${uniqueName}`);
             
-            // استخدام uploadBytesResumable مع وعد (Promise) لمراقبة النسبة
-            const url = await new Promise((resolve, reject) => {
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                
-                uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        // حساب النسبة المئوية للرفع
-                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                        btn.innerText = `جاري الرفع... ${progress}%`;
-                    }, 
-                    (error) => {
-                        reject(error);
-                    }, 
-                    async () => {
-                        // اكتمل الرفع، نجلب الرابط
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        resolve(downloadURL);
-                    }
-                );
-            });
-
+            // الرفع العادي المضمون
+            await uploadBytes(storageRef, file);
+            
+            // إيقاف المؤشر الوهمي وإعلان الاكتمال
+            clearInterval(progressInterval);
+            btn.innerText = `جاري الرفع... 100%`;
+            
+            const url = await getDownloadURL(storageRef);
             btn.innerText = "جاري حفظ البيانات...";
 
             await addDoc(collection(db, "submissions"), { task, className, student, fileUrl: url, fileType: file.type, timestamp: new Date() });
@@ -312,6 +304,7 @@
             document.getElementById('uploadForm').reset();
             loadLocalWorks();
         } catch(err) { 
+            clearInterval(progressInterval);
             alert("خطأ في الرفع: " + err.message); 
         } finally { 
             btn.innerText = "رفع العمل الآن"; 
