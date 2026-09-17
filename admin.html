@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المعلم | منصة المهام</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 650px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2, h3, h4 { text-align: center; color: #2c3e50; }
+        input, select, button, textarea { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #bdc3c7; box-sizing: border-box; }
+        button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; margin-bottom: 10px;}
+        button:hover { background-color: #2ecc71; }
+        .dashboard-section { background: #ecf0f1; padding: 15px; margin-top: 15px; border-radius: 5px; }
+        #dashboardPanel { display: none; }
+        
+        /* تنسيق جدول عرض الأعمال */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: center; }
+        th { background-color: #34495e; color: white; }
+        a.view-link { background-color: #3498db; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px; font-size: 14px; }
+        
+        /* تنسيقات قسم إدارة البيانات (التعديل والحذف) */
+        .list-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 8px 12px; margin-top: 5px; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 14px; font-weight: bold;}
+        .list-item button { width: auto; padding: 5px 15px; margin: 0 2px; font-size: 12px; }
+        .btn-delete { background-color: #e74c3c; }
+        .btn-delete:hover { background-color: #c0392b; }
+        .btn-edit { background-color: #f1c40f; color: #333; }
+        .btn-edit:hover { background-color: #f39c12; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>لوحة تحكم المعلم</h2>
+
+    <!-- قسم تسجيل الدخول -->
+    <div id="loginPanel">
+        <h3>تسجيل الدخول</h3>
+        <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+        <input type="password" id="password" placeholder="كلمة المرور" required>
+        <button id="loginBtn">دخول</button>
+        <p id="loginError" style="color: red; text-align: center; display: none;">بيانات الدخول غير صحيحة!</p>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <div id="dashboardPanel">
+        <button id="logoutBtn" style="background-color: #e74c3c;">تسجيل الخروج</button>
+
+        <div class="dashboard-section">
+            <h3>إضافة مهمة أدائية جديدة</h3>
+            <input type="text" id="taskName" placeholder="اسم المهمة (مثال: بحث عن المثلثات)">
+            <button id="addTaskBtn">إضافة المهمة</button>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>إضافة فصل جديد</h3>
+            <input type="text" id="className" placeholder="اسم الفصل">
+            <button id="addClassBtn">إضافة الفصل</button>
+        </div>
+
+        <div class="dashboard-section">
+            <h3>إضافة طلاب (دفعة واحدة)</h3>
+            <textarea id="studentNames" rows="5" placeholder="انسخ الأسماء هنا (كل اسم في سطر)"></textarea>
+            <select id="adminClassSelect"><option value="">-- يرجى اختيار الفصل أولاً --</option></select>
+            <button id="addStudentBtn">إضافة جميع الطلاب</button>
+            <p id="studentSuccessMsg" style="color: green; text-align: center; display: none; font-weight: bold;">تمت الإضافة بنجاح!</p>
+        </div>
+
+        <!-- القسم الجديد: إدارة البيانات (التعديل والحذف) -->
+        <div class="dashboard-section" style="border: 2px solid #f39c12;">
+            <h3 style="color: #f39c12;">إدارة البيانات (تعديل وحذف)</h3>
+            
+            <h4 style="text-align: right;">المهام الأدائية المضافة</h4>
+            <div id="manageTasksList" style="max-height: 150px; overflow-y: auto; margin-bottom: 20px;"></div>
+
+            <h4 style="text-align: right;">الفصول المضافة</h4>
+            <div id="manageClassesList" style="max-height: 150px; overflow-y: auto; margin-bottom: 20px;"></div>
+
+            <h4 style="text-align: right;">إدارة الطلاب</h4>
+            <select id="manageStudentClassSelect"><option value="">-- اختر الفصل لعرض طلابه --</option></select>
+            <div id="manageStudentsList" style="max-height: 200px; overflow-y: auto; margin-top: 10px;"></div>
+        </div>
+
+        <!-- استعراض الأعمال -->
+        <div class="dashboard-section" style="border: 2px solid #3498db;">
+            <h3 style="color: #3498db;">استعراض أعمال الطلاب</h3>
+            <select id="viewTaskSelect"><option value="">-- اختر المهمة --</option></select>
+            <select id="viewClassSelect"><option value="">-- اختر الفصل --</option></select>
+            <button id="viewWorksBtn" style="background-color: #3498db;">عرض الأعمال المرفوعة</button>
+            <div id="worksResultContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="admin.js"></script>
+</body>
+</html>
