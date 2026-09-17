@@ -165,13 +165,13 @@
         <div id="superWorksContainer" style="margin-top: 20px;"></div>
     </div>
 </div>
-
 <!-- كود Firebase والبرمجة -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+    // لاحظ إضافة uploadBytesResumable هنا
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAwoo2lKgcNRTDvGx6_iVUmFbhsDELVTy8",
@@ -216,7 +216,6 @@
         });
     };
 
-    // الترتيب الأبجدي للنصوص العربية
     const sortArabic = (a, b) => a.name.localeCompare(b.name, 'ar');
 
     async function loadStudentInitialData() {
@@ -224,7 +223,6 @@
             const taskSel = document.getElementById('studentTaskSelect');
             const classSel = document.getElementById('studentClassSelect');
             
-            // جلب وترتيب المهام (الأحدث أولاً)
             const tSnap = await getDocs(collection(db, "tasks"));
             let tasks = [];
             tSnap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
@@ -233,7 +231,6 @@
             taskSel.innerHTML = '<option value="">-- اختر المهمة الأدائية --</option>';
             tasks.forEach(t => taskSel.innerHTML += `<option value="${t.name}">${t.name}</option>`);
             
-            // جلب وترتيب الفصول (أبجدياً)
             const cSnap = await getDocs(collection(db, "classes"));
             let classes = [];
             cSnap.forEach(d => classes.push({ id: d.id, ...d.data() }));
@@ -247,7 +244,6 @@
     }
     loadStudentInitialData();
 
-    // جلب وترتيب الطلاب (أبجدياً) عند تغيير الفصل
     document.getElementById('studentClassSelect').addEventListener('change', async (e) => {
         const classId = e.target.value;
         const studentSel = document.getElementById('studentNameSelect');
@@ -264,6 +260,7 @@
         students.forEach(s => studentSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
     });
 
+    // --- تحديث دالة الرفع لإظهار النسبة المئوية ---
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const task = document.getElementById('studentTaskSelect').value;
@@ -274,13 +271,36 @@
         const btn = document.getElementById('submitBtn');
 
         if(!task || !student) return alert("اختر المهمة والاسم.");
-        btn.innerText = "جاري الرفع..."; btn.disabled = true;
+        
+        btn.disabled = true;
+        btn.innerText = "جاري التحضير...";
 
         try {
             const uniqueName = Date.now() + "_" + file.name;
             const storageRef = ref(storage, `uploads/${className}/${task}/${uniqueName}`);
-            await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(storageRef);
+            
+            // استخدام uploadBytesResumable مع وعد (Promise) لمراقبة النسبة
+            const url = await new Promise((resolve, reject) => {
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        // حساب النسبة المئوية للرفع
+                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        btn.innerText = `جاري الرفع... ${progress}%`;
+                    }, 
+                    (error) => {
+                        reject(error);
+                    }, 
+                    async () => {
+                        // اكتمل الرفع، نجلب الرابط
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        resolve(downloadURL);
+                    }
+                );
+            });
+
+            btn.innerText = "جاري حفظ البيانات...";
 
             await addDoc(collection(db, "submissions"), { task, className, student, fileUrl: url, fileType: file.type, timestamp: new Date() });
             
@@ -291,8 +311,12 @@
             alert("تم رفع العمل بنجاح!");
             document.getElementById('uploadForm').reset();
             loadLocalWorks();
-        } catch(err) { alert("خطأ في الرفع: " + err.message); }
-        finally { btn.innerText = "رفع العمل الآن"; btn.disabled = false; }
+        } catch(err) { 
+            alert("خطأ في الرفع: " + err.message); 
+        } finally { 
+            btn.innerText = "رفع العمل الآن"; 
+            btn.disabled = false; 
+        }
     });
 
     function loadLocalWorks() {
@@ -306,7 +330,6 @@
         });
     }
 
-    // دوال المعلم للإضافة والتعديل والحذف
     async function loadAllDropdowns() {
         const cSnap = await getDocs(collection(db, "classes"));
         let classes = []; cSnap.forEach(d => classes.push({ id: d.id, ...d.data() })); classes.sort(sortArabic);
@@ -326,7 +349,6 @@
 
     window.addData = async (col, inputId) => {
         const val = document.getElementById(inputId).value.trim();
-        // حفظ الوقت لترتيب المهام لاحقاً
         if(val) { await addDoc(collection(db, col), { name: val, timestamp: new Date() }); alert("تمت الإضافة!"); document.getElementById(inputId).value=''; loadAllDropdowns(); loadStudentInitialData(); }
     };
 
@@ -338,7 +360,6 @@
         alert("تمت إضافة الطلاب!"); document.getElementById('bulkStudentNames').value = '';
     };
 
-    // عرض القائمة مع خياري التعديل والحذف
     window.loadManageList = async () => {
         const col = document.getElementById('manageDataType').value;
         const list = document.getElementById('manageListContainer');
@@ -347,7 +368,6 @@
         const snap = await getDocs(collection(db, col));
         let items = []; snap.forEach(d => items.push({ id: d.id, ...d.data() }));
         
-        // ترتيب العناصر المعروضة
         if (col === 'tasks') items.sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
         else items.sort(sortArabic);
 
@@ -365,7 +385,6 @@
         });
     };
 
-    // دالة التعديل الجديدة
     window.editData = async (col, id, oldName) => {
         const newName = prompt("تعديل الاسم:", oldName);
         if(newName && newName.trim() !== "" && newName !== oldName) { 
@@ -394,7 +413,7 @@
         let found = false;
         
         let works = []; snap.forEach(d => works.push({id: d.id, ...d.data()}));
-        works.sort((a,b) => a.student.localeCompare(b.student, 'ar')); // ترتيب أبجدي للأعمال
+        works.sort((a,b) => a.student.localeCompare(b.student, 'ar')); 
         
         works.forEach(d => {
             if(d.task === task) {
@@ -431,10 +450,8 @@
         });
 
         let html = '';
-        // ترتيب الفصول أبجدياً في تقرير المشرف
         Object.keys(grouped).sort((a,b) => a.localeCompare(b, 'ar')).forEach(cName => {
             html += `<div class="class-group"><div class="class-title">فصل: ${cName}</div><div class="works-grid">`;
-            // ترتيب الطلاب أبجدياً داخل كل فصل
             grouped[cName].sort((a,b) => a.student.localeCompare(b.student, 'ar')).forEach(w => {
                 const media = w.fileType.startsWith('image') ? `<img src="${w.fileUrl}">` : `<video src="${w.fileUrl}" controls></video>`;
                 html += `<div class="work-card">${media}<div class="student-name">${w.student}</div><a href="${w.fileUrl}" target="_blank" class="view-link">تكبير</a></div>`;
