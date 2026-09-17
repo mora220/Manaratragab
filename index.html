@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة تسليم أعمال المهام الأدائية | رياضيات</title>
+    <style>
+        /* التنسيقات العامة */
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .admin-container { max-width: 800px; } 
+        h2, h3, h4 { text-align: center; color: #2c3e50; }
+        .header-subtitle { text-align: center; color: #e67e22; font-size: 16px; font-weight: bold; margin-bottom: 20px; }
+        
+        /* تنسيق النماذج */
+        label { display: block; margin-top: 15px; font-weight: bold; color: #34495e; }
+        input, select, button, textarea { width: 100%; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #bdc3c7; box-sizing: border-box; }
+        button { background-color: #3498db; color: white; border: none; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 15px; }
+        button:hover { background-color: #2980b9; }
+        .btn-green { background-color: #27ae60; } .btn-green:hover { background-color: #2ecc71; }
+        .btn-red { background-color: #e74c3c; } .btn-red:hover { background-color: #c0392b; }
+        .btn-purple { background-color: #8e44ad; } .btn-purple:hover { background-color: #9b59b6; }
+        
+        /* تنسيق عرض الأعمال للطالب */
+        .my-works { margin-top: 30px; padding-top: 20px; border-top: 2px solid #ecf0f1; }
+        .work-item { background: #ecf0f1; padding: 10px; margin-top: 10px; border-radius: 5px; }
+        
+        /* التذييل والأيقونات */
+        .footer { text-align: center; margin-top: 30px; padding-top: 15px; font-size: 14px; color: #7f8c8d; border-top: 1px dashed #bdc3c7; font-weight: bold; }
+        .footer-icons { margin-top: 10px; }
+        .footer-icons span { cursor: pointer; font-size: 20px; margin: 0 10px; transition: transform 0.2s; display: inline-block; }
+        .footer-icons span:hover { transform: scale(1.2); }
+        
+        /* إخفاء الواجهات */
+        .view-section { display: none; }
+        #studentView { display: block; } 
+        
+        /* تنسيقات لوحات التحكم */
+        .dashboard-section { background: #ecf0f1; padding: 15px; margin-top: 15px; border-radius: 5px; border-top: 3px solid #bdc3c7; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 8px 12px; margin-top: 5px; border: 1px solid #bdc3c7; border-radius: 4px; font-size: 14px; font-weight: bold;}
+        .list-item button { width: auto; padding: 5px 15px; margin: 0 2px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: center; }
+        th { background-color: #34495e; color: white; }
+        a.view-link { background-color: #3498db; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px; font-size: 14px; display: inline-block; }
+        
+        /* تنسيق عرض المشرف */
+        .class-group { margin-top: 20px; padding: 15px; border: 2px solid #8e44ad; border-radius: 8px; background-color: #fff; }
+        .class-title { color: #8e44ad; border-bottom: 2px solid #8e44ad; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; }
+        .works-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .work-card { background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd; text-align: center; }
+        .work-card img, .work-card video { max-width: 100%; max-height: 150px; border-radius: 5px; margin-bottom: 10px; object-fit: cover;}
+    </style>
+</head>
+<body>
+
+<!-- 1. واجهة الطالب -->
+<div id="studentView" class="view-section container">
+    <h2>منصة تسليم أعمال المهام الأدائية</h2>
+    <div class="header-subtitle">مادة الرياضيات</div>
+    
+    <form id="uploadForm">
+        <label>اختر المهمة الأدائية:</label>
+        <select id="studentTaskSelect" required><option value="">-- جاري التحميل... --</option></select>
+
+        <label>اختر الفصل:</label>
+        <select id="studentClassSelect" required><option value="">-- جاري التحميل... --</option></select>
+
+        <label>اختر اسمك:</label>
+        <select id="studentNameSelect" required><option value="">-- يرجى اختيار الفصل أولاً --</option></select>
+
+        <label>اختر العمل (صورة أو فيديو):</label>
+        <input type="file" id="fileUpload" accept="image/*,video/*" required>
+
+        <button type="submit" id="submitBtn">رفع العمل الآن</button>
+    </form>
+
+    <div class="my-works">
+        <h3>أعمالي السابقة</h3>
+        <div id="studentWorksList"><p style="text-align: center; color: #7f8c8d;">لم تقم برفع أي أعمال من هذا الجهاز.</p></div>
+    </div>
+
+    <div class="footer">
+        إعداد وتصميم الموقع: معلم الرياضيات محمد رجب
+        <div class="footer-icons">
+            <span onclick="showView('teacherLoginView')" title="دخول المعلم">⚙️</span>
+            <span onclick="showView('supervisorLoginView')" title="متابعة الإدارة">👁️</span>
+        </div>
+    </div>
+</div>
+
+<!-- 2. واجهة دخول المعلم -->
+<div id="teacherLoginView" class="view-section container">
+    <h2>تسجيل دخول المعلم</h2>
+    <input type="text" id="tUsername" placeholder="اسم المستخدم (الكود)">
+    <input type="password" id="tPassword" placeholder="كلمة المرور">
+    <button onclick="loginUser('tUsername', 'tPassword', 'teacherDashboardView')" class="btn-green">دخول</button>
+    <button onclick="showView('studentView')" class="btn-red" style="margin-top: 10px;">رجوع للمنصة</button>
+</div>
+
+<!-- 3. واجهة دخول المشرف -->
+<div id="supervisorLoginView" class="view-section container">
+    <h2>دخول المشرف / الإدارة</h2>
+    <input type="text" id="sUsername" placeholder="اسم المستخدم (الكود)">
+    <input type="password" id="sPassword" placeholder="كلمة المرور">
+    <button onclick="loginUser('sUsername', 'sPassword', 'supervisorDashboardView')" class="btn-purple">دخول</button>
+    <button onclick="showView('studentView')" class="btn-red" style="margin-top: 10px;">رجوع للمنصة</button>
+</div>
+
+<!-- 4. لوحة تحكم المعلم -->
+<div id="teacherDashboardView" class="view-section container admin-container">
+    <h2>لوحة تحكم المعلم</h2>
+    <button onclick="logoutUser()" class="btn-red" style="width: auto; float: left; margin-top: -50px;">خروج</button>
+    <div style="clear: both;"></div>
+
+    <div class="dashboard-section" style="border-top-color: #27ae60;">
+        <h3>إضافة بيانات جديدة</h3>
+        <input type="text" id="newTaskName" placeholder="اسم المهمة الأدائية">
+        <button onclick="addData('tasks', 'newTaskName')" class="btn-green">إضافة المهمة</button>
+        
+        <input type="text" id="newClassName" placeholder="اسم الفصل">
+        <button onclick="addData('classes', 'newClassName')" class="btn-green">إضافة الفصل</button>
+        
+        <textarea id="bulkStudentNames" rows="4" placeholder="انسخ أسماء الطلاب هنا (كل اسم في سطر)"></textarea>
+        <select id="adminClassSelect"><option value="">-- اختر الفصل --</option></select>
+        <button onclick="addStudentsBulk()" class="btn-green">إضافة الطلاب للفصل المحدد</button>
+    </div>
+
+    <div class="dashboard-section" style="border-top-color: #f39c12;">
+        <h3>إدارة البيانات (حذف فقط)</h3>
+        <select id="manageDataType" onchange="loadManageList()">
+            <option value="tasks">المهام الأدائية</option>
+            <option value="classes">الفصول</option>
+            <option value="students">الطلاب</option>
+        </select>
+        <div id="manageListContainer" style="max-height: 200px; overflow-y: auto; margin-top: 10px;"></div>
+    </div>
+
+    <div class="dashboard-section" style="border-top-color: #3498db;">
+        <h3>استعراض وحذف الأعمال</h3>
+        <select id="adminTaskSelect"><option value="">-- اختر المهمة --</option></select>
+        <select id="adminClassFilter"><option value="">-- اختر الفصل --</option></select>
+        <button onclick="loadAdminWorks()" style="margin-top: 10px;">عرض الأعمال</button>
+        <div id="adminWorksContainer"></div>
+    </div>
+</div>
+
+<!-- 5. لوحة المتابعة للمشرف -->
+<div id="supervisorDashboardView" class="view-section container admin-container">
+    <h2 style="color: #8e44ad;">المتابعة الإشرافية</h2>
+    <button onclick="logoutUser()" class="btn-red" style="width: auto; float: left; margin-top: -50px;">خروج</button>
+    <div style="clear: both;"></div>
+
+    <div class="dashboard-section" style="border-top-color: #8e44ad;">
+        <h3>استعراض جميع الأعمال المرفوعة</h3>
+        <select id="superTaskSelect"><option value="">-- اختر المهمة لعرض أعمال جميع الفصول --</option></select>
+        <button onclick="loadSupervisorWorks()" class="btn-purple">عرض التقرير الشامل</button>
+        <div id="superWorksContainer" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- كود Firebase والبرمجة -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwoo2lKgcNRTDvGx6_iVUmFbhsDELVTy8",
+      authDomain: "manarat-58104.firebaseapp.com",
+      projectId: "manarat-58104",
+      storageBucket: "manarat-58104.firebasestorage.app",
+      messagingSenderId: "789095466473",
+      appId: "1:789095466473:web:a7554ca669443211dcb778"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    window.showView = (viewId) => {
+        document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+        document.getElementById(viewId).style.display = 'block';
+    };
+
+    window.loginUser = (userId, passId, targetView) => {
+        const username = document.getElementById(userId).value.trim();
+        const pass = document.getElementById(passId).value;
+
+        // الحماية والتفريق بين الحسابات
+        if (targetView === 'teacherDashboardView' && username !== '1411') {
+            return alert("عفواً، هذا المكان مخصص لدخول المعلم فقط!");
+        }
+        if (targetView === 'supervisorDashboardView' && username !== '123') {
+            return alert("عفواً، هذا المكان مخصص لدخول الإدارة والمشرف فقط!");
+        }
+
+        // تحويل الكود إلى بريد إلكتروني وهمي ليقبله فايربيز في الخلفية
+        const email = username + "@manarat.com";
+
+        signInWithEmailAndPassword(auth, email, pass)
+            .then(() => {
+                showView(targetView);
+                loadAllDropdowns();
+            })
+            .catch(e => alert("بيانات الدخول غير صحيحة!"));
+    };
+
+    window.logoutUser = () => {
+        signOut(auth).then(() => {
+            showView('studentView');
+            document.querySelectorAll('input[type="password"]').forEach(el => el.value = '');
+            document.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
+        });
+    };
+
+    async function loadStudentInitialData() {
+        try {
+            const taskSel = document.getElementById('studentTaskSelect');
+            const classSel = document.getElementById('studentClassSelect');
+            taskSel.innerHTML = '<option value="">-- اختر المهمة الأدائية --</option>';
+            classSel.innerHTML = '<option value="">-- اختر الفصل --</option>';
+            
+            const tSnap = await getDocs(collection(db, "tasks"));
+            tSnap.forEach(d => taskSel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+            
+            const cSnap = await getDocs(collection(db, "classes"));
+            cSnap.forEach(d => classSel.innerHTML += `<option value="${d.id}">${d.data().name}</option>`);
+            
+            loadLocalWorks();
+        } catch(e) { console.error(e); }
+    }
+    loadStudentInitialData();
+
+    document.getElementById('studentClassSelect').addEventListener('change', async (e) => {
+        const classId = e.target.value;
+        const studentSel = document.getElementById('studentNameSelect');
+        studentSel.innerHTML = '<option value="">-- جاري التحميل... --</option>';
+        if(!classId) return;
+        const q = query(collection(db, "students"), where("classId", "==", classId));
+        const sSnap = await getDocs(q);
+        studentSel.innerHTML = '<option value="">-- اختر اسمك --</option>';
+        sSnap.forEach(d => studentSel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+    });
+
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const task = document.getElementById('studentTaskSelect').value;
+        const classSel = document.getElementById('studentClassSelect');
+        const className = classSel.options[classSel.selectedIndex].text;
+        const student = document.getElementById('studentNameSelect').value;
+        const file = document.getElementById('fileUpload').files[0];
+        const btn = document.getElementById('submitBtn');
+
+        if(!task || !student) return alert("اختر المهمة والاسم.");
+        btn.innerText = "جاري الرفع..."; btn.disabled = true;
+
+        try {
+            const uniqueName = Date.now() + "_" + file.name;
+            const storageRef = ref(storage, `uploads/${className}/${task}/${uniqueName}`);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+
+            await addDoc(collection(db, "submissions"), { task, className, student, fileUrl: url, fileType: file.type, timestamp: new Date() });
+            
+            const myWorks = JSON.parse(localStorage.getItem('myWorks')) || [];
+            myWorks.push({ task, student, url, type: file.type });
+            localStorage.setItem('myWorks', JSON.stringify(myWorks));
+            
+            alert("تم رفع العمل بنجاح!");
+            document.getElementById('uploadForm').reset();
+            loadLocalWorks();
+        } catch(err) { alert("خطأ في الرفع: " + err.message); }
+        finally { btn.innerText = "رفع العمل الآن"; btn.disabled = false; }
+    });
+
+    function loadLocalWorks() {
+        const list = document.getElementById('studentWorksList');
+        const works = JSON.parse(localStorage.getItem('myWorks')) || [];
+        if(works.length === 0) return;
+        list.innerHTML = '';
+        works.reverse().forEach(w => {
+            const media = w.type.startsWith('image') ? `<img src="${w.url}" style="max-width:100%; border-radius:5px;">` : `<video src="${w.url}" controls style="max-width:100%; border-radius:5px;"></video>`;
+            list.innerHTML += `<div class="work-item"><strong>${w.task}</strong> | ${w.student}<br>${media}</div>`;
+        });
+    }
+
+    async function loadAllDropdowns() {
+        const cSnap = await getDocs(collection(db, "classes"));
+        const classOptions = '<option value="">-- اختر الفصل --</option>' + cSnap.docs.map(d => `<option value="${d.id}">${d.data().name}</option>`).join('');
+        document.getElementById('adminClassSelect').innerHTML = classOptions;
+        document.getElementById('adminClassFilter').innerHTML = classOptions;
+
+        const tSnap = await getDocs(collection(db, "tasks"));
+        const taskOptions = '<option value="">-- اختر المهمة --</option>' + tSnap.docs.map(d => `<option value="${d.data().name}">${d.data().name}</option>`).join('');
+        document.getElementById('adminTaskSelect').innerHTML = taskOptions;
+        document.getElementById('superTaskSelect').innerHTML = taskOptions;
+        
+        loadManageList();
+    }
+
+    window.addData = async (col, inputId) => {
+        const val = document.getElementById(inputId).value.trim();
+        if(val) { await addDoc(collection(db, col), { name: val }); alert("تمت الإضافة!"); document.getElementById(inputId).value=''; loadAllDropdowns(); loadStudentInitialData(); }
+    };
+
+    window.addStudentsBulk = async () => {
+        const names = document.getElementById('bulkStudentNames').value.split('\n').map(n=>n.trim()).filter(n=>n);
+        const sel = document.getElementById('adminClassSelect');
+        if(!sel.value || !names.length) return alert("اختر الفصل وأدخل الأسماء.");
+        for(let n of names) await addDoc(collection(db, "students"), { name: n, classId: sel.value, className: sel.options[sel.selectedIndex].text });
+        alert("تمت إضافة الطلاب!"); document.getElementById('bulkStudentNames').value = '';
+    };
+
+    window.loadManageList = async () => {
+        const col = document.getElementById('manageDataType').value;
+        const list = document.getElementById('manageListContainer');
+        list.innerHTML = 'جاري التحميل...';
+        const snap = await getDocs(collection(db, col));
+        list.innerHTML = '';
+        snap.forEach(d => {
+            const label = col === 'students' ? `${d.data().name} (${d.data().className})` : d.data().name;
+            list.innerHTML += `<div class="list-item"><span>${label}</span><button class="btn-red" onclick="deleteData('${col}', '${d.id}')">حذف</button></div>`;
+        });
+    };
+
+    window.deleteData = async (col, id) => {
+        if(confirm("تأكيد الحذف؟")) { await deleteDoc(doc(db, col, id)); loadManageList(); loadAllDropdowns(); }
+    };
+
+    window.loadAdminWorks = async () => {
+        const task = document.getElementById('adminTaskSelect').value;
+        const sel = document.getElementById('adminClassFilter');
+        const className = sel.options[sel.selectedIndex]?.text;
+        const cont = document.getElementById('adminWorksContainer');
+        if(!task || !sel.value) return alert("اختر المهمة والفصل.");
+        cont.innerHTML = 'جاري البحث...';
+        
+        const q = query(collection(db, "submissions"), where("className", "==", className));
+        const snap = await getDocs(q);
+        let html = `<table><tr><th>الطالب</th><th>العمل</th><th>إجراء</th></tr>`;
+        let found = false;
+        snap.forEach(d => {
+            if(d.data().task === task) {
+                found = true;
+                html += `<tr><td>${d.data().student}</td><td><a href="${d.data().fileUrl}" target="_blank" class="view-link">مشاهدة</a></td><td><button class="btn-red" style="margin:0; padding:5px;" onclick="deleteSubmission('${d.id}', '${d.data().fileUrl}')">حذف</button></td></tr>`;
+            }
+        });
+        cont.innerHTML = found ? html + '</table>' : '<p style="color:red;text-align:center;">لا توجد أعمال.</p>';
+    };
+
+    window.deleteSubmission = async (id, url) => {
+        if(confirm("تأكيد حذف العمل نهائياً؟")) {
+            await deleteDoc(doc(db, "submissions", id));
+            try { await deleteObject(ref(storage, url)); } catch(e){}
+            alert("تم الحذف."); loadAdminWorks();
+        }
+    };
+
+    window.loadSupervisorWorks = async () => {
+        const task = document.getElementById('superTaskSelect').value;
+        const cont = document.getElementById('superWorksContainer');
+        if(!task) return alert("اختر المهمة.");
+        cont.innerHTML = 'جاري إعداد التقرير...';
+        
+        const q = query(collection(db, "submissions"), where("task", "==", task));
+        const snap = await getDocs(q);
+        if(snap.empty) return cont.innerHTML = '<p style="color:red;text-align:center;">لا توجد أي أعمال لهذه المهمة.</p>';
+
+        const grouped = {};
+        snap.forEach(d => {
+            const cName = d.data().className;
+            if(!grouped[cName]) grouped[cName] = [];
+            grouped[cName].push(d.data());
+        });
+
+        let html = '';
+        for(const [cName, works] of Object.entries(grouped)) {
+            html += `<div class="class-group"><div class="class-title">فصل: ${cName}</div><div class="works-grid">`;
+            works.forEach(w => {
+                const media = w.fileType.startsWith('image') ? `<img src="${w.fileUrl}">` : `<video src="${w.fileUrl}" controls></video>`;
+                html += `<div class="work-card">${media}<div class="student-name">${w.student}</div><a href="${w.fileUrl}" target="_blank" class="view-link">تكبير</a></div>`;
+            });
+            html += `</div></div>`;
+        }
+        cont.innerHTML = html;
+    };
+</script>
+</body>
+</html>
