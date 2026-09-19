@@ -22,6 +22,8 @@
         input, select, button, textarea { width: 100%; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #bdc3c7; box-sizing: border-box; font-family: Tahoma, sans-serif; }
         button { background-color: #3498db; color: white; border: none; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 15px; }
         button:hover { background-color: #2980b9; }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        
         .btn-green { background-color: #27ae60; } .btn-green:hover { background-color: #2ecc71; }
         .btn-red { background-color: #e74c3c; } .btn-red:hover { background-color: #c0392b; }
         .btn-purple { background-color: #8e44ad; } .btn-purple:hover { background-color: #9b59b6; }
@@ -164,18 +166,17 @@
     </div>
 </div>
 
-<!-- كود Firebase والبرمجة -->
+<!-- كود Firebase و Cloudinary -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
+    // إعدادات Firebase لقاعدة البيانات والمصادقة
     const firebaseConfig = {
       apiKey: "AIzaSyAwoo2lKgcNRTDvGx6_iVUmFbhsDELVTy8",
       authDomain: "manarat-58104.firebaseapp.com",
       projectId: "manarat-58104",
-      storageBucket: "manarat-58104.firebasestorage.app",
       messagingSenderId: "789095466473",
       appId: "1:789095466473:web:a7554ca669443211dcb778"
     };
@@ -183,7 +184,12 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
+
+    // ==========================================
+    // إعدادات Cloudinary لرفع الملفات مجاناً
+    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/xp6bqnoe/upload";
+    const UPLOAD_PRESET = "ragabawy";
+    // ==========================================
 
     window.showView = (viewId) => {
         document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
@@ -258,8 +264,8 @@
         students.forEach(s => studentSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
     });
 
-    // الرفع مع مؤشر ذكي يحاكي النسبة المئوية
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    // الرفع باستخدام Cloudinary مع مؤشر تقدم حقيقي
+    document.getElementById('uploadForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const task = document.getElementById('studentTaskSelect').value;
         const classSel = document.getElementById('studentClassSelect');
@@ -271,45 +277,58 @@
         if(!task || !student) return alert("اختر المهمة والاسم.");
         
         btn.disabled = true;
-        let progress = 0;
         
-        // تشغيل مؤشر وهمي ذكي لكي لا يشعر الطالب بالملل
-        const progressInterval = setInterval(() => {
-            progress += Math.floor(Math.random() * 15) + 5; 
-            if(progress >= 95) progress = 95; // يقف عند 95% حتى يكتمل الرفع الفعلي
-            btn.innerText = `جاري الرفع... ${progress}%`;
-        }, 800);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", UPLOAD_PRESET);
+        formData.append("tags", `${className},${task}`);
 
-        try {
-            const uniqueName = Date.now() + "_" + file.name;
-            const storageRef = ref(storage, `uploads/${className}/${task}/${uniqueName}`);
-            
-            // الرفع العادي المضمون
-            await uploadBytes(storageRef, file);
-            
-            // إيقاف المؤشر الوهمي وإعلان الاكتمال
-            clearInterval(progressInterval);
-            btn.innerText = `جاري الرفع... 100%`;
-            
-            const url = await getDownloadURL(storageRef);
-            btn.innerText = "جاري حفظ البيانات...";
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", CLOUDINARY_URL, true);
+        
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                btn.innerText = `جاري الرفع... ${percent}%`;
+            }
+        };
 
-            await addDoc(collection(db, "submissions"), { task, className, student, fileUrl: url, fileType: file.type, timestamp: new Date() });
-            
-            const myWorks = JSON.parse(localStorage.getItem('myWorks')) || [];
-            myWorks.push({ task, student, url, type: file.type });
-            localStorage.setItem('myWorks', JSON.stringify(myWorks));
-            
-            alert("تم رفع العمل بنجاح!");
-            document.getElementById('uploadForm').reset();
-            loadLocalWorks();
-        } catch(err) { 
-            clearInterval(progressInterval);
-            alert("خطأ في الرفع: " + err.message); 
-        } finally { 
+        xhr.onload = async () => {
+            if (xhr.status === 200) {
+                btn.innerText = "جاري حفظ البيانات...";
+                const response = JSON.parse(xhr.responseText);
+                const fileUrl = response.secure_url;
+                
+                try {
+                    await addDoc(collection(db, "submissions"), { task, className, student, fileUrl: fileUrl, fileType: file.type, timestamp: new Date() });
+                    
+                    const myWorks = JSON.parse(localStorage.getItem('myWorks')) || [];
+                    myWorks.push({ task, student, url: fileUrl, type: file.type });
+                    localStorage.setItem('myWorks', JSON.stringify(myWorks));
+                    
+                    alert("تم رفع العمل بنجاح! أحسنت.");
+                    document.getElementById('uploadForm').reset();
+                    loadLocalWorks();
+                } catch(err) {
+                    alert("نجح الرفع ولكن حدث خطأ أثناء الحفظ في قاعدة البيانات: " + err.message);
+                } finally {
+                    btn.innerText = "رفع العمل الآن"; 
+                    btn.disabled = false; 
+                }
+            } else {
+                alert("حدث خطأ أثناء الرفع. يرجى المحاولة لاحقاً.");
+                btn.innerText = "رفع العمل الآن"; 
+                btn.disabled = false;
+            }
+        };
+
+        xhr.onerror = () => {
+            alert("فشل الاتصال بالإنترنت أثناء الرفع.");
             btn.innerText = "رفع العمل الآن"; 
-            btn.disabled = false; 
-        }
+            btn.disabled = false;
+        };
+
+        xhr.send(formData);
     });
 
     function loadLocalWorks() {
@@ -411,16 +430,15 @@
         works.forEach(d => {
             if(d.task === task) {
                 found = true;
-                html += `<tr><td>${d.student}</td><td><a href="${d.fileUrl}" target="_blank" class="view-link">مشاهدة</a></td><td><button class="btn-red" style="margin:0; padding:5px;" onclick="deleteSubmission('${d.id}', '${d.fileUrl}')">حذف</button></td></tr>`;
+                html += `<tr><td>${d.student}</td><td><a href="${d.fileUrl}" target="_blank" class="view-link">مشاهدة</a></td><td><button class="btn-red" style="margin:0; padding:5px;" onclick="deleteSubmission('${d.id}')">حذف</button></td></tr>`;
             }
         });
         cont.innerHTML = found ? html + '</table>' : '<p style="color:red;text-align:center;">لا توجد أعمال.</p>';
     };
 
-    window.deleteSubmission = async (id, url) => {
-        if(confirm("تأكيد حذف العمل نهائياً؟")) {
+    window.deleteSubmission = async (id) => {
+        if(confirm("تأكيد حذف العمل؟ (سيتم إخفاؤه من المنصة)")) {
             await deleteDoc(doc(db, "submissions", id));
-            try { await deleteObject(ref(storage, url)); } catch(e){}
             alert("تم الحذف."); loadAdminWorks();
         }
     };
